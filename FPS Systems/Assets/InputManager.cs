@@ -43,5 +43,9 @@ public class InputManager : MonoBehaviour
     public Vector2 GetMouseDelta() {
         return _inputActions.Player.Look.ReadValue<Vector2>();
     }
+
+    public bool GetJump() {
+        return _inputActions.Player.Jump.ReadValue<float>() != 0;
+    }
     #endregion
 }

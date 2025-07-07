@@ -10,6 +10,15 @@ public class PlayerController : MonoBehaviour
     [SerializeField]
     private float _movementSpeed;
 
+    [Header("Jump")]
+    [SerializeField]
+    private float _jumpForce;
+    [SerializeField]
+    private int _maxJumps;
+    private int _numberOfJumps;
+    private bool _isGrounded;
+    private bool _isJumpReleased;
+
     [Header("Look")]
     [SerializeField]
     private float _lookSensitivityHorizontal;
@@ -34,6 +43,7 @@ public class PlayerController : MonoBehaviour
 
     #region Lifecycle methods
     private void Awake(){
+        _numberOfJumps = _maxJumps;
 	}
 	
     private void Start(){
@@ -46,6 +56,7 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate() {
         Move();
+        Jump();
         Look();
     }
     #endregion
@@ -57,12 +68,31 @@ public class PlayerController : MonoBehaviour
         _rigidbody.AddForce(movementVector * _movementSpeed * Time.fixedDeltaTime, ForceMode.Force);
     }
 
+    //If there are more trigger colliders I might need to dedicate its own gameobject for this
+    private void OnTriggerEnter(Collider other) {
+        //Debug.Log($"Collision {other.gameObject.name}");
+        _isGrounded = true;
+        _numberOfJumps = _maxJumps;
+    }
+
+    private void OnTriggerExit(Collider other) {
+        _isGrounded = false;
+    }
+
+    private void Jump() {
+        if (_inputManager.GetJump() && _isJumpReleased && (_isGrounded || _numberOfJumps > 0)) {
+            _isJumpReleased = false;
+            _numberOfJumps--;
+            _rigidbody.AddForce(Vector3.up * _jumpForce, ForceMode.Impulse);
+        }
+        else if (!_inputManager.GetJump())
+            _isJumpReleased = true;
+
+            
+    }
+
     private void Look() {
         Vector2 lookInputVector = _inputManager.GetMouseDelta();
-        //Vector3 startingOrientation = _fpsCameraTransform.eulerAngles;
-        //startingOrientation.y += lookInputVector.x * _lookSensitivityHorizontal * Time.fixedDeltaTime;
-        //startingOrientation.x += lookInputVector.y * _lookSensitivityVertical * Time.fixedDeltaTime;
-        //startingOrientation.x = Mathf.Clamp(startingOrientation.x, -_maxVerticalLookAngle, _maxVerticalLookAngle);
 
         _cameraPitch += lookInputVector.y * _lookSensitivityVertical * Time.fixedDeltaTime;
         _cameraPitch = Mathf.Clamp(_cameraPitch, -_maxVerticalLookAngle, _maxVerticalLookAngle);
